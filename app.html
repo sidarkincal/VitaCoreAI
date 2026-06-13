@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VitaCore AI — Geleceğin Sağlık Kokpiti</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+        animation: {
+          'pulse-slow': 'pulse 3s ease-in-out infinite',
+          'glow': 'glow 1.5s ease-in-out infinite alternate',
+          'float': 'float 6s ease-in-out infinite',
+          'breathe': 'breathe 4s ease-in-out infinite',
+          'scan': 'scan 3.5s ease-in-out infinite',
+        },
+        keyframes: {
+          glow: {
+            from: { filter: 'drop-shadow(0 0 4px #f97316)' },
+            to: { filter: 'drop-shadow(0 0 16px #f59e0b)' },
+          },
+          float: {
+            '0%,100%': { transform: 'translateY(0)' },
+            '50%': { transform: 'translateY(-10px)' },
+          },
+          breathe: { '0%,100%': { transform: 'scale(1)', opacity: '.55' }, '50%': { transform: 'scale(1.12)', opacity: '.9' } },
+          scan: { '0%,100%': { transform: 'translateY(-46%)', opacity: '0' }, '15%,85%': { opacity: '.7' }, '50%': { transform: 'translateY(46%)', opacity: '.7' } },
+        },
+      },
+    },
+  };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script>window.react = window.React;</script>
+<script crossorigin src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; }
+  input[type=range] { accent-color: #10b981; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float, .animate-breathe, .animate-scan, .animate-pulse, .animate-glow, .animate-pulse-slow { animation: none !important; }
+  }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+const {
+  HeartPulse, Flame, Droplets, Pill, Moon, Scale, Activity, Brain,
+  Dumbbell, Timer, X, Play, Pause, FileScan, UploadCloud, FileText,
+  BarChart3, TrendingDown, Sparkles, ShieldAlert, CheckCircle2, Sun,
+  AlertTriangle, Wind, Trophy, ChevronRight, User, Plus, Volume2, Lock,
+  ChevronLeft, VolumeX, Camera, RotateCcw, Check, Clock,
+  ClipboardList, Repeat, Target, ArrowRight,
+} = LucideReact;
+
+// ---------- Yardımcı UI parçaları ----------
+const Card = ({ children, className = "" }) => (
+  <div className={`rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-6 shadow-xl shadow-black/20 ${className}`}>
+    {children}
+  </div>
+);
+
+const SectionTitle = ({ icon: Icon, kicker, title, desc }) => (
+  <div className="mb-8">
+    <div className="flex items-center gap-2 text-emerald-400 text-sm font-semibold uppercase tracking-widest mb-2">
+      <Icon size={16} /> {kicker}
+    </div>
+    <h2 className="text-3xl md:text-4xl font-extrabold text-white">{title}</h2>
+    {desc && <p className="mt-2 text-slate-400 max-w-2xl">{desc}</p>}
+  </div>
+);
+
+/* ============================================================================
+   EGZERSİZ KOÇU — REÇETE TABANLI
+   - Hareketler AI tarafından ÜRETİLMEZ. Kullanıcının yüklediği REÇETEDİR
+     (kendi / fizyoterapist tarafından hazırlanan hareket listesi).
+   - Bu modülün görevi: yüklenen listeyi SIRASIYLA, süre/set/tekrar ve
+     dinlenmelerle uygulatmak; sesli koç ile eşlik etmek.
+   - Kamera ile form takibi sonraki faz; şimdilik yer tutucu (CameraStage).
+
+   VERİ SÖZLEŞMESİ (her hareket objesi):
+   { id, name, target, mode:"sure"|"tekrar", duration, reps, sets,
+     setRest, moveRest, note, steps:string[] }
+   ========================================================================== */
+const RECETE = [
+  { id: 1, name: "Kedi-Deve Esnetmesi", target: "Bel", mode: "sure", duration: 40, sets: 2, setRest: 15, moveRest: 25,
+    note: "Yavaş ve kontrollü; nefesinle senkronize et.",
+    steps: ["Ellerin omuz, dizlerin kalça hizasında dört ayak pozisyonu al.", "Nefes verirken sırtını yukarı yuvarla (kedi).", "Nefes alırken göğsü öne aç, beli hafif çukurlaştır (deve)."] },
+  { id: 2, name: "Kalça Köprüsü", target: "Kalça / Bel", mode: "tekrar", reps: 12, sets: 3, setRest: 25, moveRest: 30,
+    note: "Üstte 2 sn bekle, kalçayı sık.",
+    steps: ["Sırt üstü yat, dizleri bük, ayaklar yere tam bassın.", "Kalçayı yukarı kaldır; gövde-kalça-diz düz bir hat olsun.", "Üstte sık, sonra kontrollü şekilde indir."] },
+  { id: 3, name: "Boyun Yana Esnetme", target: "Boyun", mode: "sure", duration: 30, sets: 2, setRest: 10, moveRest: 20,
+    note: "Her iki yön için tekrarla.",
+    steps: ["Dik otur, omuzları gevşet.", "Başını yana eğ, kulağı omuza yaklaştır.", "Hafif gerginlikte bekle, asla zorlama."] },
+  { id: 4, name: "Omurga Rotasyonu", target: "Bel", mode: "tekrar", reps: 10, sets: 2, setRest: 20, moveRest: 25,
+    note: "Omuzları yerden kaldırma.",
+    steps: ["Sırt üstü yat, dizleri bük ve birleştir.", "Dizleri yavaşça bir yana indir.", "Merkeze dön, diğer yana tekrarla."] },
+  { id: 5, name: "Tek Bacak Diz Çekme", target: "Diz / Bel", mode: "sure", duration: 30, sets: 2, setRest: 15, moveRest: 0,
+    note: "Sırt yere yapışık kalsın.",
+    steps: ["Sırt üstü yat, bir bacağı uzat.", "Diğer dizi iki elinle göğse çek.", "Gerginliği hisset, nefes almaya devam et."] },
+];
+
+const COACH_LINES = ["Derin bir nefes al… ve ver.", "Harika gidiyorsun, ritmini koru.", "Omuzlarını gevşet.", "Az kaldı, formuna dikkat et."];
+
+/* ---------- Zamanlayıcı halkası (sahnenin imza öğesi) ---------- */
+function TimerRing({ total, left, label, sublabel, accent = "emerald", size = 248, stroke = 14 }) {
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+  const pct = total > 0 ? Math.max(0, Math.min(1, left / total)) : 0;
+  const offset = c * (1 - pct);
+  const gid = "ring-" + accent;
+  return (
+    <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <defs>
+          <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
+            {accent === "amber"
+              ? (<><stop offset="0%" stopColor="#fbbf24" /><stop offset="100%" stopColor="#f97316" /></>)
+              : (<><stop offset="0%" stopColor="#34d399" /><stop offset="100%" stopColor="#22d3ee" /></>)}
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} stroke="#1e293b" strokeWidth={stroke} fill="none" />
+        <circle cx={size / 2} cy={size / 2} r={r} stroke={`url(#${gid})`} strokeWidth={stroke} fill="none"
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 1s linear" }} />
+      </svg>
+      <div className="absolute text-center">
+        <div className={`font-black tabular-nums text-white ${size > 160 ? "text-6xl" : "text-2xl"}`}>{label}</div>
+        {sublabel && <div className={`font-medium text-slate-400 ${size > 160 ? "mt-1 text-sm" : "text-[10px]"}`}>{sublabel}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Sıra rayı: hareketleri SIRASIYLA gösterir ---------- */
+function SequenceRail({ moves, current, phase }) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-xl p-4">
+      <div className="flex items-center gap-2 px-1 pb-3 text-sm font-semibold text-emerald-400">
+        <ClipboardList size={16} /> Reçeteniz
+        <span className="ml-auto text-xs font-medium text-slate-500">{moves.length} hareket</span>
+      </div>
+      <ol className="space-y-1.5">
+        {moves.map((m, i) => {
+          const done = i < current || phase === "done";
+          const active = i === current && phase !== "done";
+          return (
+            <li key={m.id}
+              className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition ${
+                active ? "border-emerald-400/60 bg-emerald-500/10 ring-1 ring-emerald-400/30"
+                : done ? "border-slate-800 bg-slate-950/40 opacity-60"
+                : "border-slate-800 bg-slate-950/40"}`}>
+              <div className={`grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-bold ${
+                done ? "bg-emerald-500/20 text-emerald-300"
+                : active ? "bg-gradient-to-br from-emerald-400 to-cyan-500 text-slate-950"
+                : "bg-slate-800 text-slate-400"}`}>
+                {done ? <Check size={14} /> : i + 1}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className={`truncate text-sm font-medium ${active ? "text-white" : "text-slate-300"}`}>{m.name}</div>
+                <div className="truncate text-[11px] text-slate-500">
+                  {m.mode === "sure" ? `${m.duration} sn × ${m.sets} set` : `${m.reps} tekrar × ${m.sets} set`} · {m.target}
+                </div>
+              </div>
+              {active && <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400 animate-pulse" />}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/* ---------- Kamera yer tutucu (form takibi · sonraki faz) ---------- */
+function CameraStage({ children }) {
+  return (
+    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900 to-slate-950">
+      <div className="absolute inset-0 opacity-[0.07]"
+        style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+      <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-2xl animate-breathe" />
+      <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent animate-scan" />
+      {["left-4 top-4 border-l-2 border-t-2","right-4 top-4 border-r-2 border-t-2","left-4 bottom-4 border-l-2 border-b-2","right-4 bottom-4 border-r-2 border-b-2"]
+        .map((c, i) => <div key={i} className={`absolute h-6 w-6 rounded-[3px] border-emerald-400/40 ${c}`} />)}
+      <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-slate-950/70 px-3 py-1.5 text-xs font-semibold text-cyan-300 backdrop-blur">
+        <Camera size={13} /> Kamera ile form takibi · Yakında
+      </div>
+      <div className="relative grid h-full w-full place-items-center p-6">{children}</div>
+    </div>
+  );
+}
+
+// ---------- Ana Uygulama ----------
+function App() {
+  // --- Onboarding / Yasal Duvar ---
+  const [accepted, setAccepted] = useState(false);
+  const [profile, setProfile] = useState({ boy: "", kilo: "", yas: "" });
+
+  // --- Kokpit ---
+  const WATER_GOAL = 2500;
+  const [water, setWater] = useState(750);
+  const [meds, setMeds] = useState([
+    { id: 1, name: "B12 Vitamini", time: "09:00", done: false },
+    { id: 2, name: "Omega-3", time: "13:30", done: false },
+    { id: 3, name: "Magnezyum", time: "22:00", done: false },
+  ]);
+  const [weightInput, setWeightInput] = useState("");
+  const [sleepInput, setSleepInput] = useState("");
+  const [logs, setLogs] = useState([]);
+  const [streak, setStreak] = useState(12);
+  const [streakGlow, setStreakGlow] = useState(false);
+
+  const burstStreak = (pts = 1) => {
+    setStreak((s) => s + pts);
+    setStreakGlow(true);
+    setTimeout(() => setStreakGlow(false), 1500);
+  };
+
+  const waterPct = Math.min(100, Math.round((water / WATER_GOAL) * 100));
+  const waterDone = water >= WATER_GOAL;
+
+  const addWater = () => {
+    setWater((prev) => {
+      const next = prev + 250;
+      if (prev < WATER_GOAL && next >= WATER_GOAL) setTimeout(() => burstStreak(2), 0);
+      return next;
+    });
+  };
+
+  const toggleMed = (id) => {
+    setMeds((prev) => {
+      const next = prev.map((m) => (m.id === id ? { ...m, done: !m.done } : m));
+      const med = prev.find((m) => m.id === id);
+      if (med && !med.done) burstStreak(1);
+      return next;
+    });
+  };
+
+  // --- Ağrı Haritası ---
+  const regions = [
+    { id: "bas", label: "Baş" },
+    { id: "boyun", label: "Boyun" },
+    { id: "omuz", label: "Omuz" },
+    { id: "bel", label: "Bel" },
+    { id: "diz", label: "Diz" },
+  ];
+  const [selectedRegion, setSelectedRegion] = useState(null);
+  const [painScores, setPainScores] = useState({});
+  const painValue = selectedRegion ? painScores[selectedRegion] ?? 0 : 0;
+  const backPainAlert = (painScores["bel"] ?? 0) >= 7;
+
+  // --- Egzersiz Koçu (reçete tabanlı oynatıcı) ---
+  // Hareketler kullanıcının yüklediği reçeteden gelir; AI üretmez.
+  const moves = RECETE;
+  const [phase, setPhase] = useState("lobby");     // lobby | active | rest | done
+  const [idx, setIdx] = useState(0);               // aktif hareketin indeksi
+  const [setNo, setSetNo] = useState(1);           // aktif set (1 tabanlı)
+  const [left, setLeft] = useState(0);             // geri sayım (sn)
+  const [running, setRunning] = useState(true);    // duraklat/devam
+  const [restKind, setRestKind] = useState("set"); // "set" | "move"
+  const [voiceOn, setVoiceOn] = useState(false);
+  const [coachLine, setCoachLine] = useState(COACH_LINES[0]);
+  const move = moves[idx];
+
+  const totalMin = useMemo(() => {
+    const secs = moves.reduce((a, m) => a + (m.mode === "sure" ? m.duration * m.sets : m.reps * 3 * m.sets)
+      + m.setRest * (m.sets - 1) + m.moveRest, 0);
+    return Math.round(secs / 60);
+  }, [moves]);
+
+  const speak = useCallback((t) => {
+    if (!voiceOn || typeof window === "undefined" || !window.speechSynthesis) return;
+    try { window.speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "tr-TR"; u.rate = 0.96; window.speechSynthesis.speak(u); } catch (e) {}
+  }, [voiceOn]);
+
+  const beginMove = useCallback((i, n = 1) => {
+    const m = moves[i];
+    setIdx(i); setSetNo(n); setPhase("active"); setRunning(true);
+    setLeft(m.mode === "sure" ? m.duration : 0);
+    speak(`${m.name}. ${n}. set.`);
+  }, [moves, speak]);
+
+  const startWorkout = () => { window.speechSynthesis && window.speechSynthesis.cancel(); beginMove(0, 1); };
+  const resetWorkout = () => { window.speechSynthesis && window.speechSynthesis.cancel(); setPhase("lobby"); setIdx(0); setSetNo(1); setLeft(0); };
+
+  // bir seti tamamla → sonraki set / sonraki hareket / bitiş
+  const completeSet = useCallback(() => {
+    const m = moves[idx];
+    if (setNo < m.sets) {
+      if (m.setRest > 0) { setRestKind("set"); setLeft(m.setRest); setPhase("rest"); setRunning(true); }
+      else beginMove(idx, setNo + 1);
+    } else if (idx < moves.length - 1) {
+      if (m.moveRest > 0) { setRestKind("move"); setLeft(m.moveRest); setPhase("rest"); setRunning(true); }
+      else beginMove(idx + 1, 1);
+    } else {
+      setPhase("done"); burstStreak(3);
+      speak("Tebrikler, antrenmanı tamamladınız.");
+    }
+  }, [moves, idx, setNo, beginMove, speak]);
+
+  const resumeFromRest = useCallback(() => {
+    if (restKind === "set") beginMove(idx, setNo + 1);
+    else beginMove(idx + 1, 1);
+  }, [restKind, idx, setNo, beginMove]);
+
+  const goNext = () => {
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    if (idx < moves.length - 1) beginMove(idx + 1, 1);
+    else { setPhase("done"); burstStreak(3); }
+  };
+  const goPrev = () => {
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    beginMove(Math.max(0, idx - 1), 1);
+  };
+
+  // geri sayım motoru (süre hareketi + dinlenme)
+  useEffect(() => {
+    const counting = (phase === "rest") || (phase === "active" && move && move.mode === "sure");
+    if (!counting || !running) return;
+    const t = setInterval(() => setLeft((s) => s - 1), 1000);
+    return () => clearInterval(t);
+  }, [phase, running, move]);
+
+  useEffect(() => {
+    if (left > 0) return;
+    if (phase === "active" && move && move.mode === "sure") completeSet();
+    else if (phase === "rest") resumeFromRest();
+  }, [left]); // eslint-disable-line
+
+  // dinlenmede koç sözleri
+  useEffect(() => {
+    if (phase !== "rest") return;
+    let i = 0; setCoachLine(COACH_LINES[0]); speak(COACH_LINES[0]);
+    const t = setInterval(() => { i = (i + 1) % COACH_LINES.length; setCoachLine(COACH_LINES[i]); }, 3000);
+    return () => clearInterval(t);
+  }, [phase]); // eslint-disable-line
+
+  const overallPct = phase === "done" ? 100 : Math.round((idx / moves.length) * 100);
+  const restAccent = phase === "rest" ? "amber" : "emerald";
+
+  // --- OCR ---
+  const [dragOver, setDragOver] = useState(false);
+  const [ocrState, setOcrState] = useState("idle"); // idle | scanning | done
+  const simulateOcr = () => {
+    setOcrState("scanning");
+    setTimeout(() => setOcrState("done"), 2200);
+  };
+
+  // --- Analitik verileri ---
+  const weekWeights = [82.4, 82.1, 81.9, 82.0, 81.6, 81.3, 81.1];
+  const medRates = [100, 66, 33, 66, 100, 33, 66];
+  const painTrend = [8, 7, 7, 6, 5, 5, 4];
+
+  // ---------- RENDER ----------
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900">
+
+      {/* ===== NAVBAR ===== */}
+      <header className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-950/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="absolute inset-0 bg-emerald-500 blur-lg opacity-50 rounded-full"></div>
+              <div className="relative h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
+                <HeartPulse className="text-slate-950" size={22} />
+              </div>
+            </div>
+            <div>
+              <div className="font-extrabold text-lg tracking-tight text-white">VitaCore <span className="text-emerald-400">AI</span></div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 -mt-0.5">Sağlık Kokpiti</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <a href="index.html" className="hidden sm:inline-flex items-center gap-1 text-sm text-slate-400 hover:text-emerald-300 transition">Tanıtım Sayfası</a>
+            {/* Streak Ateşi */}
+            <div className={`flex items-center gap-2 rounded-full border px-4 py-1.5 transition-all duration-500 ${streakGlow ? "border-amber-400 bg-amber-500/20 scale-110" : "border-slate-700 bg-slate-900"}`}>
+              <Flame size={20} className={`${streakGlow ? "text-amber-400 animate-glow" : "text-orange-500"}`} />
+              <span className="font-bold text-white">{streak}</span>
+              <span className="text-xs text-slate-400 hidden sm:inline">İstikrar Puanı</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ===== 1. HERO + YASAL DUVAR ===== */}
+      <section className="relative overflow-hidden">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[800px] rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 pt-16 pb-12 text-center relative">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 text-sm text-emerald-300 mb-6">
+            <Sparkles size={14} /> Yapay Zeka Destekli Bütünsel Sağlık Platformu
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white leading-tight">
+            Sağlığınızın <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Komuta Merkezi</span>
+          </h1>
+          <p className="mt-5 text-slate-400 max-w-2xl mx-auto text-lg">
+            Su, ilaç, uyku, ağrı ve egzersiz verilerinizi tek kokpitte birleştirin. VitaCore AI desenleri okur, sizi bir adım önde tutar.
+          </p>
+
+          {!accepted ? (
+            /* Medikal Feragatname */
+            <div className="mt-10 mx-auto max-w-xl">
+              <Card className="border-amber-500/30 text-left">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-xl bg-amber-500/15 p-3 shrink-0"><ShieldAlert className="text-amber-400" size={26} /></div>
+                  <div>
+                    <h3 className="font-bold text-white text-lg">Medikal Feragatname</h3>
+                    <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+                      VitaCore AI bir <strong className="text-slate-200">yapay zeka asistanıdır</strong>, profesyonel tıbbi tavsiye, teşhis veya tedavi yerine geçmez.
+                      Sağlığınızla ilgili kararlar için her zaman doktorunuza danışın. Acil durumlarda <strong className="text-slate-200">112</strong>'yi arayın.
+                    </p>
+                    <button onClick={() => setAccepted(true)}
+                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 font-bold text-slate-950 hover:opacity-90 transition shadow-lg shadow-emerald-500/25">
+                      Onaylıyorum ve Başlıyorum
+                    </button>
+                  </div>
+                </div>
+              </Card>
+              <div className="mt-6 flex items-center justify-center gap-2 text-slate-500 text-sm">
+                <Lock size={14} /> Kokpit, onayınız olmadan kilitli kalır.
+              </div>
+            </div>
+          ) : (
+            /* Profil Girişi */
+            <div className="mt-10 mx-auto max-w-2xl">
+              <Card>
+                <div className="flex items-center gap-2 mb-4 text-emerald-400 font-semibold"><User size={18} /> Profilinizi Tanıyalım</div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[["boy", "Boy (cm)", "175"], ["kilo", "Kilo (kg)", "81"], ["yas", "Yaş", "32"]].map(([k, label, ph]) => (
+                    <div key={k}>
+                      <label className="block text-xs text-slate-400 mb-1 text-left">{label}</label>
+                      <input type="number" placeholder={ph} value={profile[k]}
+                        onChange={(e) => setProfile({ ...profile, [k]: e.target.value })}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+                    </div>
+                  ))}
+                </div>
+                {profile.boy && profile.kilo && (
+                  <div className="mt-4 text-sm text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 size={16} />
+                    VKİ: <strong>{(profile.kilo / Math.pow(profile.boy / 100, 2)).toFixed(1)}</strong> — AI planınız bu değere göre kalibre edildi.
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ===== KİLİTLİ İÇERİK SARMALAYICI ===== */}
+      <div className={`relative transition-all duration-700 ${accepted ? "" : "pointer-events-none select-none blur-md opacity-40"}`}>
+
+        {/* ===== 2. SAĞLIK KOKPİTİ ===== */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16" id="kokpit">
+          <SectionTitle icon={Activity} kicker="Sağlık Kokpiti" title="Bütünsel Dashboard"
+            desc="Her tıklamanız anlık olarak işlenir; hedefe ulaştığınızda istikrar ateşiniz parlar." />
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* Su Takibi */}
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 font-semibold text-white"><Droplets className="text-cyan-400" size={20} /> Su Takibi</div>
+                <span className={`text-xs font-bold px-2 py-1 rounded-full ${waterDone ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-400"}`}>
+                  {waterDone ? "Hedef Tamam! 🎉" : `%${waterPct}`}
+                </span>
+              </div>
+              <div className="text-3xl font-extrabold text-white">{water}<span className="text-base text-slate-400 font-medium"> / {WATER_GOAL} ml</span></div>
+              <div className="mt-4 h-4 rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-all duration-700" style={{ width: waterPct + "%" }}></div>
+              </div>
+              <button onClick={addWater}
+                className="mt-5 w-full rounded-xl border border-cyan-500/40 bg-cyan-500/10 py-2.5 font-semibold text-cyan-300 hover:bg-cyan-500/20 transition flex items-center justify-center gap-2">
+                <Plus size={16} /> +250 ml Ekle
+              </button>
+            </Card>
+
+            {/* İlaç Check-List */}
+            <Card>
+              <div className="flex items-center gap-2 font-semibold text-white mb-4"><Pill className="text-emerald-400" size={20} /> Günlük İlaçlar</div>
+              <ul className="space-y-3">
+                {meds.map((m) => (
+                  <li key={m.id} onClick={() => toggleMed(m.id)}
+                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition ${m.done ? "border-emerald-500/40 bg-emerald-500/10" : "border-slate-700 bg-slate-950 hover:border-slate-500"}`}>
+                    <div className={`h-5 w-5 rounded-md border-2 flex items-center justify-center transition ${m.done ? "border-emerald-400 bg-emerald-400" : "border-slate-600"}`}>
+                      {m.done && <CheckCircle2 size={14} className="text-slate-950" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className={`font-medium ${m.done ? "text-emerald-300 line-through" : "text-white"}`}>{m.name}</div>
+                      <div className="text-xs text-slate-500">{m.time}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 text-xs text-slate-500">{meds.filter(m=>m.done).length}/{meds.length} tamamlandı</div>
+            </Card>
+
+            {/* Kilo & Uyku */}
+            <Card>
+              <div className="flex items-center gap-2 font-semibold text-white mb-4"><Scale className="text-violet-400" size={20} /> Hızlı Veri Girişi</div>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input type="number" placeholder="Kilo (kg)" value={weightInput} onChange={(e)=>setWeightInput(e.target.value)}
+                    className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white placeholder-slate-600 focus:border-violet-500 focus:outline-none" />
+                  <button onClick={() => { if(weightInput){ setLogs(l=>[`⚖️ Kilo: ${weightInput} kg kaydedildi`,...l]); setWeightInput(""); burstStreak(1);} }}
+                    className="rounded-xl bg-violet-500/15 border border-violet-500/40 px-4 text-violet-300 font-semibold hover:bg-violet-500/25 transition">Kaydet</button>
+                </div>
+                <div className="flex gap-2">
+                  <input type="number" placeholder="Uyku (saat)" value={sleepInput} onChange={(e)=>setSleepInput(e.target.value)}
+                    className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-white placeholder-slate-600 focus:border-indigo-500 focus:outline-none" />
+                  <button onClick={() => { if(sleepInput){ setLogs(l=>[`🌙 Uyku: ${sleepInput} saat kaydedildi`,...l]); setSleepInput(""); burstStreak(1);} }}
+                    className="rounded-xl bg-indigo-500/15 border border-indigo-500/40 px-4 text-indigo-300 font-semibold hover:bg-indigo-500/25 transition">Kaydet</button>
+                </div>
+                <div className="rounded-xl bg-slate-950 border border-slate-800 p-3 min-h-[72px] max-h-28 overflow-y-auto space-y-1">
+                  {logs.length === 0
+                    ? <div className="text-xs text-slate-600 flex items-center gap-2"><Moon size={12}/> Henüz kayıt yok...</div>
+                    : logs.map((l, i) => <div key={i} className="text-xs text-slate-300">{l}</div>)}
+                </div>
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* ===== 3. AĞRI HARİTASI ===== */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 border-t border-slate-800/60" id="agri">
+          <SectionTitle icon={Brain} kicker="Pain Mapping" title="İnteraktif Ağrı Haritası"
+            desc="Vücut silüetinde bir bölgeye dokunun, ağrı şiddetini belirleyin. AI, antrenman planınızı buna göre yeniden yazar." />
+
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Vücut SVG */}
+            <Card className="flex justify-center py-8">
+              <svg viewBox="0 0 200 420" className="h-[380px]">
+                {/* silüet */}
+                <g fill="#1e293b" stroke="#334155" strokeWidth="2">
+                  <circle cx="100" cy="40" r="26" />
+                  <rect x="86" y="66" width="28" height="18" rx="8" />
+                  <path d="M62 84 h76 q14 0 14 16 v70 q0 14-12 14 h-80 q-12 0-12-14 v-70 q0-16 14-16z" />
+                  <rect x="44" y="92" width="16" height="100" rx="8" />
+                  <rect x="140" y="92" width="16" height="100" rx="8" />
+                  <path d="M66 184 h68 q10 0 10 12 v28 q0 10-10 10 h-68 q-10 0-10-10 v-28 q0-12 10-12z" />
+                  <rect x="66" y="236" width="28" height="150" rx="12" />
+                  <rect x="106" y="236" width="28" height="150" rx="12" />
+                </g>
+                {/* tıklanabilir noktalar */}
+                {[
+                  ["bas", 100, 40], ["boyun", 100, 74], ["omuz", 140, 96], ["bel", 100, 208], ["diz", 80, 320],
+                ].map(([id, cx, cy]) => {
+                  const score = painScores[id] ?? 0;
+                  const active = selectedRegion === id;
+                  return (
+                    <g key={id} className="cursor-pointer" onClick={() => setSelectedRegion(id)}>
+                      <circle cx={cx} cy={cy} r="14" fill={score >= 7 ? "#ef444466" : score > 0 ? "#f59e0b55" : "#10b98133"}
+                        stroke={active ? "#34d399" : score >= 7 ? "#ef4444" : "#10b981"} strokeWidth={active ? 3 : 1.5}>
+                        {active && <animate attributeName="r" values="13;16;13" dur="1.4s" repeatCount="indefinite" />}
+                      </circle>
+                      {score > 0 && <text x={cx} y={cy + 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#fff">{score}</text>}
+                    </g>
+                  );
+                })}
+              </svg>
+            </Card>
+
+            {/* Slider Paneli */}
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {regions.map((r) => (
+                  <button key={r.id} onClick={() => setSelectedRegion(r.id)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold border transition ${selectedRegion === r.id ? "border-emerald-400 bg-emerald-500/20 text-emerald-300" : "border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500"}`}>
+                    {r.label}{painScores[r.id] ? ` · ${painScores[r.id]}` : ""}
+                  </button>
+                ))}
+              </div>
+
+              {selectedRegion ? (
+                <Card>
+                  <div className="font-bold text-white text-lg mb-1">{regions.find(r=>r.id===selectedRegion).label} Bölgesi</div>
+                  <div className="text-sm text-slate-400 mb-5">Ağrı şiddetini 1-10 arasında işaretleyin.</div>
+                  <input type="range" min="0" max="10" value={painValue}
+                    onChange={(e) => setPainScores({ ...painScores, [selectedRegion]: Number(e.target.value) })}
+                    className="w-full" />
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                    <span>Yok</span>
+                    <span className={`text-2xl font-black ${painValue >= 7 ? "text-red-400" : painValue >= 4 ? "text-amber-400" : "text-emerald-400"}`}>{painValue}</span>
+                    <span>Dayanılmaz</span>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="text-slate-500 text-sm flex items-center gap-2"><ChevronRight size={16}/> Başlamak için silüetten veya etiketlerden bir bölge seçin.</Card>
+              )}
+
+              {backPainAlert && (
+                <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-5 flex items-start gap-3 animate-pulse-slow">
+                  <AlertTriangle className="text-red-400 shrink-0" size={22} />
+                  <div className="text-sm text-red-200">
+                    <strong>DİKKAT:</strong> Bel ağrınız yüksek görünüyor. Bu durum egzersiz koçunuzda <strong>uyarı olarak işaretlendi</strong>; zorlanırsanız hareketi atlayın ve reçetenizi fizyoterapistinizle gözden geçirin. ⬇
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ===== 4. EGZERSİZ KOÇU — REÇETE TABANLI ===== */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 border-t border-slate-800/60" id="koc">
+          <SectionTitle icon={Dumbbell} kicker="Reçete Oynatıcı" title="Sesli ve Süreli Egzersiz Koçu"
+            desc="Hareketler AI tarafından üretilmez — sizin yüklediğiniz reçetedir. VitaCore AI bunları sırasıyla uygular, süre/set ve dinlenmeleri yönetir." />
+
+          {/* ----- LOBİ: reçeteyi göster, başlat ----- */}
+          {phase === "lobby" && (
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+              {/* reçete listesi */}
+              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-2 backdrop-blur-xl">
+                {moves.map((m, i) => (
+                  <div key={m.id} className="flex items-center gap-4 rounded-xl px-4 py-3.5 transition hover:bg-slate-800/40">
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-800 text-sm font-bold text-slate-300">{i + 1}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-white">{m.name}</div>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+                        <span className="inline-flex items-center gap-1"><Target size={12} className="text-emerald-400" />{m.target}</span>
+                        <span className="inline-flex items-center gap-1">
+                          {m.mode === "sure" ? <><Clock size={12} className="text-cyan-400" />{m.duration} sn</> : <><Repeat size={12} className="text-cyan-400" />{m.reps} tekrar</>}
+                        </span>
+                        <span className="inline-flex items-center gap-1"><Dumbbell size={12} className="text-slate-500" />{m.sets} set</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {backPainAlert && (
+                  <div className="mt-1 flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-xs text-amber-200">
+                    <ShieldAlert size={15} className="mt-0.5 shrink-0" /> Bel ağrınız yüksek görünüyor — zorlanırsanız hareketi atlayın ve reçetenizi fizyoterapistinizle gözden geçirin.
+                  </div>
+                )}
+              </div>
+
+              {/* özet + başlat */}
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl">
+                  <div className="flex items-center justify-between text-sm text-slate-400"><span>Toplam hareket</span><span className="font-bold text-white">{moves.length}</span></div>
+                  <div className="mt-2 flex items-center justify-between text-sm text-slate-400"><span>Tahmini süre</span><span className="font-bold text-white">~{totalMin} dk</span></div>
+                  <button onClick={() => setVoiceOn((v) => !v)}
+                    className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-semibold transition ${voiceOn ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-500"}`}>
+                    {voiceOn ? <Volume2 size={16} /> : <VolumeX size={16} />} Sesli koç {voiceOn ? "açık" : "kapalı"}
+                  </button>
+                  <button onClick={startWorkout}
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 py-3.5 font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:opacity-90">
+                    <Play size={18} /> Antrenmanı Başlat
+                  </button>
+                </div>
+
+                {/* yükleme yer tutucu — reçete kullanıcıdan gelir */}
+                <div className="flex w-full items-center gap-3 rounded-2xl border border-dashed border-slate-700 bg-slate-900/40 p-4 text-left">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-800"><UploadCloud size={18} className="text-slate-400" /></div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">Yeni hareket listesi yükle</div>
+                    <div className="text-xs text-slate-500">PDF / JSON · fizyoterapist reçetesi — yükleme yakında</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ----- AKTİF & DİNLENME ----- */}
+          {(phase === "active" || phase === "rest") && move && (
+            <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+              <div className="order-2 lg:order-1"><SequenceRail moves={moves} current={idx} phase={phase} /></div>
+
+              <div className="order-1 space-y-5 lg:order-2">
+                {/* üst bilgi + ilerleme */}
+                <div className="flex items-center gap-4">
+                  <button onClick={resetWorkout} className="rounded-lg border border-slate-700 p-2 text-slate-400 transition hover:border-slate-500 hover:text-white" title="Antrenmandan çık">
+                    <X size={18} />
+                  </button>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>Hareket {idx + 1}/{moves.length}</span>
+                      <span>%{overallPct}</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500" style={{ width: overallPct + "%" }} />
+                    </div>
+                  </div>
+                  <button onClick={() => setVoiceOn((v) => !v)} className={`rounded-lg border p-2 transition ${voiceOn ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-slate-700 text-slate-400 hover:text-white"}`} title="Sesli koç">
+                    {voiceOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                  </button>
+                </div>
+
+                {phase === "rest" ? (
+                  /* ---- DİNLENME ---- */
+                  <div className="rounded-3xl border border-amber-400/40 bg-gradient-to-br from-amber-950/30 to-slate-900 p-8 text-center">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-500/10 px-4 py-1.5 text-sm font-semibold text-amber-300">
+                      <Wind size={15} className="animate-pulse" /> {restKind === "set" ? "Setler arası dinlenme" : "Sonraki harekete hazırlan"}
+                    </div>
+                    <div className="mt-6 flex justify-center"><TimerRing total={restKind === "set" ? move.setRest : move.moveRest} left={left} label={String(left)} sublabel="saniye" accent="amber" /></div>
+                    <div className="mx-auto mt-6 inline-flex max-w-md items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-5 py-3">
+                      <Volume2 className="shrink-0 text-emerald-300" size={18} /><span className="italic text-emerald-100">"{coachLine}"</span>
+                    </div>
+                    <div className="mt-5 text-sm text-slate-400">
+                      Sıradaki: <strong className="text-white">{restKind === "set" ? `${move.name} · ${setNo + 1}. set` : (moves[idx + 1] ? moves[idx + 1].name : "—")}</strong>
+                    </div>
+                    <button onClick={resumeFromRest} className="mt-5 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-500">
+                      Dinlenmeyi geç <ArrowRight size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  /* ---- AKTİF HAREKET ---- */
+                  <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl md:p-7">
+                    <div className="mb-4 flex flex-wrap items-center gap-3">
+                      <h3 className="text-2xl font-black text-white md:text-3xl">{move.name}</h3>
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300"><Target size={12} /> {move.target}</span>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-300"><Dumbbell size={12} /> {setNo}/{move.sets}. set</span>
+                    </div>
+
+                    <CameraStage>
+                      {move.mode === "sure" ? (
+                        <TimerRing total={move.duration} left={left} label={String(left)} sublabel="saniye" accent={restAccent} />
+                      ) : (
+                        <div className="text-center">
+                          <div className="text-7xl font-black tabular-nums text-white">{move.reps}</div>
+                          <div className="mt-1 text-sm font-medium text-slate-400">tekrar</div>
+                          <div className="mt-3 flex justify-center gap-1.5">
+                            {Array.from({ length: move.sets }).map((_, s) => (
+                              <span key={s} className={`h-2 w-7 rounded-full ${s < setNo - 1 ? "bg-emerald-400" : s === setNo - 1 ? "bg-cyan-400" : "bg-slate-700"}`} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CameraStage>
+
+                    {move.note && (
+                      <div className="mt-4 flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
+                        <Sparkles size={15} className="mt-0.5 shrink-0 text-cyan-400" /> {move.note}
+                      </div>
+                    )}
+
+                    {move.steps && move.steps.length > 0 && (
+                      <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+                        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Nasıl yapılır</div>
+                        <ol className="space-y-1.5">
+                          {move.steps.map((st, si) => (
+                            <li key={si} className="flex items-start gap-2.5 text-sm text-slate-300">
+                              <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md bg-slate-800 text-[11px] font-bold text-emerald-300">{si + 1}</span>
+                              {st}
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    {/* transport kontrolleri */}
+                    <div className="mt-5 flex items-center justify-center gap-3">
+                      <button onClick={goPrev} disabled={idx === 0}
+                        className="grid h-12 w-12 place-items-center rounded-xl border border-slate-700 text-slate-300 transition hover:border-slate-500 disabled:opacity-30" title="Önceki hareket">
+                        <ChevronLeft size={20} />
+                      </button>
+
+                      {move.mode === "sure" ? (
+                        <button onClick={() => setRunning((r) => !r)}
+                          className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:opacity-90" title="Duraklat / Devam">
+                          {running ? <Pause size={26} /> : <Play size={26} />}
+                        </button>
+                      ) : (
+                        <button onClick={completeSet}
+                          className="flex h-16 items-center gap-2 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 px-7 font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:opacity-90" title="Seti tamamla">
+                          <Check size={22} /> Seti Tamamla
+                        </button>
+                      )}
+
+                      <button onClick={goNext}
+                        className="grid h-12 w-12 place-items-center rounded-xl border border-slate-700 text-slate-300 transition hover:border-slate-500" title="Sonraki hareket">
+                        <ChevronRight size={20} />
+                      </button>
+                    </div>
+
+                    {/* sıradaki önizleme */}
+                    <div className="mt-5 flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sıradaki</span>
+                      <span className="truncate text-sm font-medium text-slate-300">
+                        {setNo < move.sets ? `${move.name} · ${setNo + 1}. set` : (moves[idx + 1] ? moves[idx + 1].name : "Seansın sonu 🎉")}
+                      </span>
+                      <ChevronRight size={15} className="ml-auto shrink-0 text-slate-600" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ----- BİTİŞ ----- */}
+          {phase === "done" && (
+            <div className="mx-auto max-w-xl rounded-3xl border border-amber-400/40 bg-gradient-to-br from-amber-900/25 to-slate-900 p-10 text-center">
+              <Trophy size={64} className="mx-auto text-amber-400 animate-float" />
+              <h3 className="mt-6 text-4xl font-black text-white">Tebrikler! 🎉</h3>
+              <p className="mt-3 text-slate-300">Reçetenizdeki tüm hareketleri tamamladınız. İstikrar puanınıza <strong className="text-amber-300">+3</strong> eklendi.</p>
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                {[["Hareket", moves.length], ["Süre", "~" + totalMin + " dk"], ["İstikrar", "+3"]].map(([k, v]) => (
+                  <div key={k} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                    <div className="text-2xl font-black text-white">{v}</div>
+                    <div className="mt-1 text-xs text-slate-500">{k}</div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={resetWorkout} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-slate-800 px-7 py-3 font-semibold text-white transition hover:bg-slate-700">
+                <RotateCcw size={17} /> Yeni Seans
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* ===== 5. AI EVRAK OKUYUCU ===== */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 border-t border-slate-800/60" id="ocr">
+          <SectionTitle icon={FileScan} kicker="Medikal OCR" title="AI Evrak Okuyucu"
+            desc="Tahlil sonuçlarınızı veya reçetelerinizi bırakın; yapay zeka saniyeler içinde yapılandırılmış veriye dönüştürsün." />
+
+          <div onDragOver={(e)=>{e.preventDefault();setDragOver(true);}} onDragLeave={()=>setDragOver(false)}
+            onDrop={(e)=>{e.preventDefault();setDragOver(false);simulateOcr();}} onClick={simulateOcr}
+            className={`cursor-pointer rounded-3xl border-2 border-dashed p-12 text-center transition-all ${dragOver ? "border-emerald-400 bg-emerald-500/10 scale-[1.01]" : "border-slate-700 bg-slate-900/40 hover:border-slate-500"}`}>
+            {ocrState === "scanning" ? (
+              <div>
+                <FileScan size={48} className="mx-auto text-cyan-400 animate-pulse" />
+                <div className="mt-4 font-semibold text-cyan-300">AI belgenizi tarıyor...</div>
+                <div className="mt-4 mx-auto max-w-xs h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-full w-1/2 bg-gradient-to-r from-cyan-500 to-emerald-400 animate-pulse"></div>
+                </div>
+              </div>
+            ) : ocrState === "done" ? (
+              <div>
+                <CheckCircle2 size={48} className="mx-auto text-emerald-400" />
+                <div className="mt-4 font-bold text-white text-lg">tahlil_sonucu.pdf analiz edildi ✓</div>
+                <div className="mt-3 inline-block rounded-xl bg-slate-950 border border-slate-700 px-5 py-3 text-left text-sm">
+                  <div className="text-slate-300">🔬 B12: <span className="text-amber-400 font-semibold">187 pg/mL (Düşük)</span></div>
+                  <div className="text-slate-300">🩸 Hemoglobin: <span className="text-emerald-400 font-semibold">14.2 g/dL (Normal)</span></div>
+                  <div className="text-slate-300">☀️ D Vitamini: <span className="text-amber-400 font-semibold">18 ng/mL (Yetersiz)</span></div>
+                </div>
+                <div className="mt-3 text-xs text-slate-500">AI önerisi: B12 takviyeniz ilaç listenize eklendi.</div>
+              </div>
+            ) : (
+              <div>
+                <UploadCloud size={48} className={`mx-auto ${dragOver ? "text-emerald-400" : "text-slate-500"}`} />
+                <div className="mt-4 font-semibold text-white">Dosyanızı buraya sürükleyin veya tıklayın</div>
+                <div className="mt-2 text-sm text-slate-500">PDF, PNG, JPG desteklenir · Maks 10MB</div>
+                <div className="mt-4 flex justify-center gap-2">
+                  {["PDF","PNG","JPG"].map(t => <span key={t} className="rounded-md bg-slate-800 px-2.5 py-1 text-xs text-slate-400 flex items-center gap-1"><FileText size={11}/>{t}</span>)}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ===== 6. ANALİTİK ===== */}
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 border-t border-slate-800/60" id="analiz">
+          <SectionTitle icon={BarChart3} kicker="Analitik" title="Raporlama ve Trendler"
+            desc="Son 7 günün verileri — AI bunlardan haftalık içgörü raporu üretir." />
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {/* Kilo */}
+            <Card>
+              <div className="flex items-center gap-2 font-semibold text-white mb-1"><TrendingDown className="text-emerald-400" size={18}/> Haftalık Kilo</div>
+              <div className="text-xs text-emerald-300 mb-4">-1.3 kg bu hafta 📉</div>
+              <div className="flex items-end gap-2 h-32">
+                {weekWeights.map((w, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400 transition-all hover:opacity-80" style={{ height: ((w - 80) / 3 * 100) + "%" }}></div>
+                    <span className="text-[9px] text-slate-500">{["Pt","Sa","Ça","Pe","Cu","Ct","Pz"][i]}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            {/* İlaç oranı */}
+            <Card>
+              <div className="flex items-center gap-2 font-semibold text-white mb-1"><Pill className="text-cyan-400" size={18}/> İlaç Uyum Oranı</div>
+              <div className="text-xs text-amber-400 mb-4">Ortalama %66 — geliştirilebilir ⚠️</div>
+              <div className="flex items-end gap-2 h-32">
+                {medRates.map((r, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className={`w-full rounded-t-md transition-all hover:opacity-80 ${r < 50 ? "bg-gradient-to-t from-red-600 to-red-400" : "bg-gradient-to-t from-cyan-600 to-cyan-400"}`} style={{ height: r + "%" }}></div>
+                    <span className="text-[9px] text-slate-500">{["Pt","Sa","Ça","Pe","Cu","Ct","Pz"][i]}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            {/* Ağrı trendi */}
+            <Card>
+              <div className="flex items-center gap-2 font-semibold text-white mb-1"><Activity className="text-violet-400" size={18}/> Ağrı Seviyesi Trendi</div>
+              <div className="text-xs text-emerald-300 mb-4">8 → 4: Düşüş trendinde ✅</div>
+              <div className="flex items-end gap-2 h-32">
+                {painTrend.map((p, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                    <div className="w-full rounded-t-md bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-all hover:opacity-80" style={{ height: (p * 10) + "%" }}></div>
+                    <span className="text-[9px] text-slate-500">{["Pt","Sa","Ça","Pe","Cu","Ct","Pz"][i]}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* AI Haftalık Özet */}
+          <div className="mt-6 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/60 to-slate-900 p-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 h-48 w-48 bg-emerald-500/10 blur-3xl rounded-full"></div>
+            <div className="flex items-start gap-4 relative">
+              <div className="rounded-2xl bg-emerald-500/15 p-3 shrink-0"><Sparkles className="text-emerald-300" size={26} /></div>
+              <div>
+                <h3 className="font-bold text-white text-lg flex items-center gap-2">AI Haftalık Özet Raporu <span className="text-[10px] rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.5 uppercase tracking-wider">Canlı Analiz</span></h3>
+                <p className="mt-3 text-slate-300 leading-relaxed">
+                  "Bu hafta ilaçlarınızı <strong className="text-amber-300">%40 aksattınız</strong>, bu durum bel ağrınızın artışıyla
+                  <strong className="text-red-300"> paralel görünüyor</strong>. Kilo trendiniz olumlu ancak su tüketiminiz hedefin altında.
+                  Lütfen <strong className="text-cyan-300">su tüketimini artırın</strong> ve akşam magnezyum dozunuzu atlamayın."
+                </p>
+                <div className="mt-4 text-xs text-slate-500">VitaCore AI Engine v1.0 · Son güncelleme: bugün 08:00</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* ===== 7. FOOTER ===== */}
+      <footer className="border-t border-slate-800/60 bg-slate-950">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center">
+                <HeartPulse className="text-slate-950" size={22} />
+              </div>
+              <div>
+                <div className="font-extrabold text-white">VitaCore <span className="text-emerald-400">AI</span></div>
+                <div className="text-xs text-slate-500">Geleceğin Sağlık Kokpiti</div>
+              </div>
+            </div>
+            <div className="text-center text-xs text-slate-500 leading-relaxed max-w-md">
+              VitaCore AI tıbbi cihaz değildir; içerikler profesyonel tıbbi tavsiye yerine geçmez.
+            </div>
+            <div className="text-xs text-slate-600 text-center md:text-right">
+              © 2026 VitaCore AI. Tüm hakları saklıdır.<br/>
+              <span className="rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-emerald-400/80 font-mono">v1.0 MVP</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
