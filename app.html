@@ -261,6 +261,38 @@ function App() {
   const painValue = selectedRegion ? painScores[selectedRegion] ?? 0 : 0;
   const backPainAlert = (painScores["bel"] ?? 0) >= 7;
 
+  const getPainSuggestion = (region, score) => {
+    const map = {
+      bas: [
+        "Hafif baş ağrısı var. Yüksek yoğunluklu kardiyo seans ertelenir; nefes odaklı yoga ile devam et.",
+        "Baş ağrısı orta seviyede. Ekran başı egzersizleri ve hafif stretching önerilir, ağırlıktan kaçın.",
+        "Şiddetli baş ağrısı — bugünkü antrenman iptal. Dinlen, gerekirse doktoruna başvur.",
+      ],
+      boyun: [
+        "Boyun hafif gergin. Omuz press'i yük hafifletilerek, hareket açıklığı kontrollü yapılsın.",
+        "Boyun ağrısı orta düzey. Omuz press ve overhead hareketler planından çıkarıldı.",
+        "Şiddetli boyun ağrısı — AI planından omuz, sırt ve baş üzeri tüm yükler kaldırıldı.",
+      ],
+      omuz: [
+        "Omuz hafif hassas. Yükü %20 azalt, form ve kontrol öncelikli olsun.",
+        "Omuz ağrısı var. Chest press ve lateral raise izometrik alternatiflerle değiştirildi.",
+        "Şiddetli omuz ağrısı — üst vücut antrenmanı durduruldu; sadece alt vücut ve core çalış.",
+      ],
+      bel: [
+        "Bel hafif yorgun. Cat-cow ve köprü ile ısın; squat/deadlift'te formu yakından kontrol et.",
+        "Bel ağrısı orta düzey. Deadlift kaldırıldı; goblet squat ile devam et, core stabilizasyona odaklan.",
+        "Bel ağrısı kritik! Tüm kompresif yükler kaldırıldı. Fizyoterapist onayı olmadan ağırlık çalışmayın.",
+      ],
+      diz: [
+        "Diz hafif rahatsız. Tam ROM yerine yarı squat pozisyonunda kal, yükü düşür.",
+        "Diz ağrısı mevcut. Squat ve lunge izometrik leg press ile değiştirildi.",
+        "Şiddetli diz ağrısı — alt vücut yükü sıfırlandı. Yüzme veya bisiklet gibi düşük darbeli alternatifler önerilir.",
+      ],
+    };
+    const tier = score <= 3 ? 0 : score <= 6 ? 1 : 2;
+    return map[region]?.[tier] ?? "";
+  };
+
   // --- Egzersiz Koçu (reçete tabanlı oynatıcı) ---
   // Hareketler kullanıcının yüklediği reçeteden gelir; AI üretmez.
   const moves = RECETE;
@@ -540,31 +572,98 @@ function App() {
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Vücut SVG */}
             <Card className="flex justify-center py-8">
-              <svg viewBox="0 0 200 420" className="h-[380px]">
-                {/* silüet */}
-                <g fill="#1e293b" stroke="#334155" strokeWidth="2">
-                  <circle cx="100" cy="40" r="26" />
-                  <rect x="86" y="66" width="28" height="18" rx="8" />
-                  <path d="M62 84 h76 q14 0 14 16 v70 q0 14-12 14 h-80 q-12 0-12-14 v-70 q0-16 14-16z" />
-                  <rect x="44" y="92" width="16" height="100" rx="8" />
-                  <rect x="140" y="92" width="16" height="100" rx="8" />
-                  <path d="M66 184 h68 q10 0 10 12 v28 q0 10-10 10 h-68 q-10 0-10-10 v-28 q0-12 10-12z" />
-                  <rect x="66" y="236" width="28" height="150" rx="12" />
-                  <rect x="106" y="236" width="28" height="150" rx="12" />
-                </g>
-                {/* tıklanabilir noktalar */}
+              <svg viewBox="0 0 280 520" className="h-[420px] w-auto">
+                <defs>
+                  <linearGradient id="bFill" x1="0.2" y1="0" x2="0.8" y2="1">
+                    <stop offset="0%" stopColor="#1a3350"/>
+                    <stop offset="100%" stopColor="#08121e"/>
+                  </linearGradient>
+                  <linearGradient id="bFillLight" x1="0.2" y1="0" x2="0.8" y2="1">
+                    <stop offset="0%" stopColor="#1e3d5e"/>
+                    <stop offset="100%" stopColor="#0c1a2e"/>
+                  </linearGradient>
+                </defs>
+
+                {/* KAFA */}
+                <ellipse cx="140" cy="42" rx="34" ry="38" fill="url(#bFillLight)" stroke="#3472a0" strokeWidth="1.5"/>
+
+                {/* BOYUN */}
+                <rect x="127" y="76" width="26" height="26" rx="9" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* SOL ÜST KOL (hafif dışa açık) */}
+                <ellipse cx="82" cy="150" rx="20" ry="52" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"
+                  transform="rotate(-12 82 150)"/>
+
+                {/* SOL ÖN KOL */}
+                <ellipse cx="66" cy="248" rx="15" ry="46" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"
+                  transform="rotate(-5 66 248)"/>
+
+                {/* SOL EL */}
+                <ellipse cx="60" cy="304" rx="17" ry="16" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* SAĞ ÜST KOL */}
+                <ellipse cx="198" cy="150" rx="20" ry="52" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"
+                  transform="rotate(12 198 150)"/>
+
+                {/* SAĞ ÖN KOL */}
+                <ellipse cx="214" cy="248" rx="15" ry="46" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"
+                  transform="rotate(5 214 248)"/>
+
+                {/* SAĞ EL */}
+                <ellipse cx="220" cy="304" rx="17" ry="16" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* GÖVDE — trapez + bel eğrisi */}
+                <path d="
+                  M 100 98
+                  C 84 98  66 106  56 120
+                  C 50 130  50 142  52 154
+                  L 54 232
+                  C 54 246  60 256  70 260
+                  C 76 264  80 272  82 282
+                  C 86 296  96 306  110 308
+                  L 170 308
+                  C 184 306  194 296  198 282
+                  C 200 272  204 264  210 260
+                  C 220 256  226 246  226 232
+                  L 228 154
+                  C 230 142  230 130  224 120
+                  C 214 106  196 98  180 98 Z
+                " fill="url(#bFillLight)" stroke="#3472a0" strokeWidth="1.4" strokeLinejoin="round"/>
+
+                {/* SOL UYLUK */}
+                <ellipse cx="112" cy="352" rx="26" ry="52" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* SOL BALDIRI */}
+                <ellipse cx="106" cy="454" rx="20" ry="46" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* SAĞ UYLUK */}
+                <ellipse cx="168" cy="352" rx="26" ry="52" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* SAĞ BALDIRI */}
+                <ellipse cx="174" cy="454" rx="20" ry="46" fill="url(#bFill)" stroke="#3472a0" strokeWidth="1.3"/>
+
+                {/* Tıklanabilir ağrı noktaları */}
                 {[
-                  ["bas", 100, 40], ["boyun", 100, 74], ["omuz", 140, 96], ["bel", 100, 208], ["diz", 80, 320],
+                  ["bas",   140,  42],
+                  ["boyun", 140,  90],
+                  ["omuz",  220, 124],
+                  ["bel",   140, 248],
+                  ["diz",   110, 406],
                 ].map(([id, cx, cy]) => {
                   const score = painScores[id] ?? 0;
                   const active = selectedRegion === id;
                   return (
                     <g key={id} className="cursor-pointer" onClick={() => setSelectedRegion(id)}>
-                      <circle cx={cx} cy={cy} r="14" fill={score >= 7 ? "#ef444466" : score > 0 ? "#f59e0b55" : "#10b98133"}
-                        stroke={active ? "#34d399" : score >= 7 ? "#ef4444" : "#10b981"} strokeWidth={active ? 3 : 1.5}>
-                        {active && <animate attributeName="r" values="13;16;13" dur="1.4s" repeatCount="indefinite" />}
+                      <circle cx={cx} cy={cy} r={active ? 16 : 13}
+                        fill={score >= 7 ? "#ef444455" : score >= 4 ? "#f59e0b44" : "#10b98120"}
+                        stroke={active ? "#34d399" : score >= 7 ? "#ef4444" : score >= 4 ? "#f59e0b" : "#10b981"}
+                        strokeWidth={active ? 2.5 : 1.5}
+                        style={{ transition: "all 0.2s" }}>
+                        {active && <animate attributeName="r" values="13;17;13" dur="1.5s" repeatCount="indefinite"/>}
                       </circle>
-                      {score > 0 && <text x={cx} y={cy + 4} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#fff">{score}</text>}
+                      {score > 0 && (
+                        <text x={cx} y={cy + 5} textAnchor="middle" fontSize="12" fontWeight="bold" fill="white">{score}</text>
+                      )}
                     </g>
                   );
                 })}
@@ -588,12 +687,21 @@ function App() {
                   <div className="text-sm text-slate-400 mb-5">Ağrı şiddetini 1-10 arasında işaretleyin.</div>
                   <input type="range" min="0" max="10" value={painValue}
                     onChange={(e) => setPainScores({ ...painScores, [selectedRegion]: Number(e.target.value) })}
-                    className="w-full" />
+                    className="w-full accent-emerald-400" />
                   <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
                     <span>Yok</span>
                     <span className={`text-2xl font-black ${painValue >= 7 ? "text-red-400" : painValue >= 4 ? "text-amber-400" : "text-emerald-400"}`}>{painValue}</span>
                     <span>Dayanılmaz</span>
                   </div>
+                  {painValue > 0 && (
+                    <div className={`mt-4 rounded-xl p-4 border text-sm leading-relaxed ${painValue >= 7 ? "border-red-500/40 bg-red-500/10 text-red-200" : painValue >= 4 ? "border-amber-500/40 bg-amber-500/10 text-amber-200" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"}`}>
+                      <div className="flex items-center gap-2 font-semibold mb-2">
+                        <Brain size={14} />
+                        AI Antrenman Önerisi
+                      </div>
+                      {getPainSuggestion(selectedRegion, painValue)}
+                    </div>
+                  )}
                 </Card>
               ) : (
                 <Card className="text-slate-500 text-sm flex items-center gap-2"><ChevronRight size={16}/> Başlamak için silüetten veya etiketlerden bir bölge seçin.</Card>
