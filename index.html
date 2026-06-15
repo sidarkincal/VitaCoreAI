@@ -26,6 +26,41 @@
     },
   };
 </script>
+<script>
+  /* Tema (Aydınlık/Karanlık) — en erken çalışır ki sayfa parlamadan (FOUC) doğru modda açılsın. */
+  (function () {
+    var KEY = 'vitacore-theme';
+    var root = document.documentElement;
+    try {
+      var saved = localStorage.getItem(KEY);
+      if (saved === 'light') root.classList.remove('dark');
+      else if (saved === 'dark') root.classList.add('dark');
+    } catch (e) {}
+    function apply(mode) {
+      root.classList.add('theme-anim');            // yalnızca geçiş anında yumuşak renk animasyonu
+      if (mode === 'light') root.classList.remove('dark'); else root.classList.add('dark');
+      try { localStorage.setItem(KEY, mode); } catch (e) {}
+      clearTimeout(apply._t);
+      apply._t = setTimeout(function () {
+        root.classList.remove('theme-anim');
+        // Emniyet kemeri: bazı gömülü tarayıcı motorları ata (<html>) sınıfı
+        // değişince :not(.dark) seçicilerini mevcut öğelerde tazelemiyor. Geçiş
+        // bittikten sonra tek seferlik, görünmez bir reflow ile son durumu
+        // garanti ederiz; normal tarayıcılarda etkisizdir (geçiş zaten yumuşak).
+        var sx = window.scrollX, sy = window.scrollY, b = document.body, d = b.style.display;
+        b.style.display = 'none'; void b.offsetWidth; b.style.display = d || '';
+        window.scrollTo(sx, sy);
+      }, 620);
+    }
+    window.__toggleTheme = function () {
+      apply(root.classList.contains('dark') ? 'light' : 'dark');
+    };
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('[data-theme-toggle]') : null;
+      if (btn) { e.preventDefault(); window.__toggleTheme(); }
+    });
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/lucide@1.18.0/dist/umd/lucide.min.js"></script>
@@ -41,6 +76,108 @@
   @media (prefers-reduced-motion: reduce) {
     html.js .reveal { opacity: 1; transform: none; transition: none; }
   }
+
+  /* ====================== AYDINLIK / KARANLIK TEMA ======================
+     Karanlık tema VARSAYILANDIR (html.dark). Aşağıdaki kurallar yalnızca
+     AYDINLIK modda (html:not(.dark)) slate paletini bembeyaz/temiz bir
+     palete çevirir; marka vurgu renkleri (emerald/cyan) korunur.
+     Renk geçişi yalnızca tema değişimi anında (.theme-anim) çalışır → normal
+     hover geçişleri yavaşlamaz, göz yorulmaz. */
+  html.dark { color-scheme: dark; }
+  html:not(.dark) { color-scheme: light; }
+
+  html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+    transition: background-color .5s ease, border-color .5s ease, color .5s ease,
+                fill .5s ease, stroke .5s ease, box-shadow .5s ease !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html.theme-anim, html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after { transition: none !important; }
+  }
+
+  /* Güneş/Ay buton ikonları */
+  .theme-toggle .theme-icon-sun, .theme-toggle .theme-icon-moon { transition: opacity .3s ease, transform .4s ease; }
+  html.dark .theme-icon-moon { display: none; }       /* karanlıkta güneşi göster (aydınlığa geç) */
+  html:not(.dark) .theme-icon-sun { display: none; }   /* aydınlıkta ayı göster (karanlığa geç) */
+  .theme-toggle:hover .theme-icon-sun { transform: rotate(35deg); }
+  .theme-toggle:hover .theme-icon-moon { transform: rotate(-12deg); }
+
+  /* ---------- Aydınlık mod paleti ---------- */
+  html:not(.dark) body { background-color: #ffffff; }
+  html:not(.dark) ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+
+  /* Arka planlar → bembeyaz / temiz */
+  html:not(.dark) .bg-slate-950 { background-color: #ffffff; }
+  html:not(.dark) .bg-slate-900 { background-color: #ffffff; }
+  html:not(.dark) .bg-slate-800 { background-color: #f1f5f9; }
+  html:not(.dark) .bg-slate-700 { background-color: #e2e8f0; }
+  html:not(.dark) .bg-slate-950\/95 { background-color: rgb(255 255 255 / .95); }
+  html:not(.dark) .bg-slate-950\/80 { background-color: rgb(255 255 255 / .80); }
+  html:not(.dark) .bg-slate-950\/70 { background-color: rgb(255 255 255 / .70); }
+  html:not(.dark) .bg-slate-950\/60 { background-color: rgb(255 255 255 / .60); }
+  html:not(.dark) .bg-slate-950\/40 { background-color: rgb(255 255 255 / .40); }
+  html:not(.dark) .bg-slate-900\/90 { background-color: rgb(255 255 255 / .92); }
+  html:not(.dark) .bg-slate-900\/60 { background-color: rgb(255 255 255 / .85); }
+  html:not(.dark) .bg-slate-900\/40 { background-color: rgb(255 255 255 / .65); }
+  html:not(.dark) .bg-slate-900\/30 { background-color: rgb(248 250 252 / .70); }
+  html:not(.dark) .bg-slate-800\/40 { background-color: rgb(241 245 249 / .60); }
+
+  /* Metin renkleri (açıkta koyulaşır) */
+  html:not(.dark) .text-white { color: #0f172a; }
+  html:not(.dark) .text-slate-100 { color: #0f172a; }
+  html:not(.dark) .text-slate-200 { color: #1e293b; }
+  html:not(.dark) .text-slate-300 { color: #334155; }
+  html:not(.dark) .text-slate-400 { color: #475569; }
+  html:not(.dark) .text-slate-500 { color: #64748b; }
+  html:not(.dark) .text-slate-600 { color: #64748b; }  /* okunaklı muted (eski #94a3b8 fazla soluktu) */
+  html:not(.dark) .placeholder-slate-600::placeholder { color: #94a3b8; }  /* placeholder daha soluk kalabilir */
+
+  /* Kenarlıklar */
+  html:not(.dark) .border-slate-800 { border-color: #e2e8f0; }
+  html:not(.dark) .border-slate-700 { border-color: #cbd5e1; }
+  html:not(.dark) .border-slate-600 { border-color: #cbd5e1; }
+  html:not(.dark) .border-slate-500 { border-color: #94a3b8; }
+  html:not(.dark) .border-slate-800\/60 { border-color: rgb(226 232 240 / .9); }
+  html:not(.dark) .border-slate-700\/80 { border-color: rgb(203 213 225 / .9); }
+
+  /* Gradyanlar (yalnızca slate durakları açığa çevrilir) */
+  html:not(.dark) .from-slate-900 { --tw-gradient-from: #ffffff var(--tw-gradient-from-position); --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+  html:not(.dark) .from-slate-950 { --tw-gradient-from: #ffffff var(--tw-gradient-from-position); --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+  html:not(.dark) .via-slate-900 { --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), #ffffff var(--tw-gradient-via-position), var(--tw-gradient-to); }
+  html:not(.dark) .via-slate-950 { --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position); --tw-gradient-stops: var(--tw-gradient-from), #ffffff var(--tw-gradient-via-position), var(--tw-gradient-to); }
+  html:not(.dark) .to-slate-950 { --tw-gradient-to: #f8fafc var(--tw-gradient-to-position); }
+  html:not(.dark) .to-slate-900 { --tw-gradient-to: #f8fafc var(--tw-gradient-to-position); }
+  html:not(.dark) .to-slate-800 { --tw-gradient-to: #f1f5f9 var(--tw-gradient-to-position); }
+  /* Tam-sayfa slate gradyanı: aydınlıkta gradyanı kaldır, beyaz gövde görünsün → yumuşak geçiş */
+  html:not(.dark) .bg-gradient-to-b.from-slate-950 { background-image: none; }
+  /* Koyu vurgu gradyan durakları (kart arka planları) aydınlıkta soluk tinte çevrilir;
+     böylece "koyu yeşil/amber → beyaz" gibi sert, kirli geçişler temiz kalır. */
+  html:not(.dark) .from-emerald-950\/60 { --tw-gradient-from: rgb(16 185 129 / .10) var(--tw-gradient-from-position); }
+  html:not(.dark) .from-emerald-950\/70 { --tw-gradient-from: rgb(16 185 129 / .12) var(--tw-gradient-from-position); }
+  html:not(.dark) .from-amber-900\/25 { --tw-gradient-from: rgb(245 158 11 / .12) var(--tw-gradient-from-position); }
+  html:not(.dark) .from-amber-950\/30 { --tw-gradient-from: rgb(245 158 11 / .12) var(--tw-gradient-from-position); }
+  html:not(.dark) .to-cyan-950\/50 { --tw-gradient-to: rgb(6 182 212 / .12) var(--tw-gradient-to-position); }
+
+  /* Gölgeler → siyah yerine yumuşak slate */
+  html:not(.dark) .shadow-black\/40 { --tw-shadow-color: rgb(15 23 42 / .10); --tw-shadow: var(--tw-shadow-colored); }
+  html:not(.dark) .shadow-black\/20 { --tw-shadow-color: rgb(15 23 42 / .07); --tw-shadow: var(--tw-shadow-colored); }
+
+  /* Vurgu metinleri açık zeminde okunur olsun.
+     Tüm tonlar (100–400) ve opaklık varyantları (/80 vb.) tek kuralla, ileriye
+     dönük güvenli biçimde koyu/okunaklı (−700) tona sabitlenir. hover: varyantları
+     hariç tutulur; onlar aşağıdaki kendi :hover kurallarıyla yönetilir. */
+  html:not(.dark) [class*="text-emerald-"]:not([class*=":text-emerald-"]) { color: #047857; }
+  html:not(.dark) [class*="text-cyan-"]:not([class*=":text-cyan-"])       { color: #0e7490; }
+  html:not(.dark) [class*="text-amber-"]:not([class*=":text-amber-"])     { color: #b45309; }
+  html:not(.dark) [class*="text-orange-"]:not([class*=":text-orange-"])   { color: #c2410c; }
+  html:not(.dark) [class*="text-red-"]:not([class*=":text-red-"])         { color: #b91c1c; }
+  html:not(.dark) [class*="text-rose-"]:not([class*=":text-rose-"])       { color: #be123c; }
+  html:not(.dark) [class*="text-violet-"]:not([class*=":text-violet-"])   { color: #6d28d9; }
+  html:not(.dark) [class*="text-indigo-"]:not([class*=":text-indigo-"])   { color: #4338ca; }
+  html:not(.dark) [class*="text-sky-"]:not([class*=":text-sky-"])         { color: #0369a1; }
+  html:not(.dark) [class*="text-teal-"]:not([class*=":text-teal-"])       { color: #0f766e; }
+  html:not(.dark) [class*="text-green-"]:not([class*=":text-green-"])     { color: #15803d; }
+  html:not(.dark) [class*="text-fuchsia-"]:not([class*=":text-fuchsia-"]) { color: #a21caf; }
+  html:not(.dark) [class*="hover:text-emerald-"]:hover { color: #047857; }
 </style>
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased">
@@ -61,17 +198,25 @@
       </span>
     </a>
 
-    <nav class="hidden md:flex items-center gap-7 text-sm text-slate-300">
-      <a href="#ozellikler" class="hover:text-emerald-300 transition">Özellikler</a>
-      <a href="#akilli-sistem" class="hover:text-emerald-300 transition">Akıllı Sistem</a>
-      <a href="#yolculuk" class="hover:text-emerald-300 transition">Yolculuk</a>
-      <a href="#iletisim" class="hover:text-emerald-300 transition">İletişim</a>
-      <a href="app.html" class="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2 font-bold text-slate-950 hover:opacity-90 transition shadow-lg shadow-emerald-500/25">Canlı Demo</a>
-    </nav>
+    <div class="flex items-center gap-2 md:gap-4">
+      <nav class="hidden md:flex items-center gap-7 text-sm text-slate-300">
+        <a href="#ozellikler" class="hover:text-emerald-300 transition">Özellikler</a>
+        <a href="#akilli-sistem" class="hover:text-emerald-300 transition">Akıllı Sistem</a>
+        <a href="#yolculuk" class="hover:text-emerald-300 transition">Yolculuk</a>
+        <a href="#iletisim" class="hover:text-emerald-300 transition">İletişim</a>
+        <a href="app.html" class="rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2 font-bold text-slate-950 hover:opacity-90 transition shadow-lg shadow-emerald-500/25">Canlı Demo</a>
+      </nav>
 
-    <button id="menuBtn" class="md:hidden rounded-lg border border-slate-700 p-2 text-slate-300" aria-label="Menüyü aç/kapat">
-      <i data-lucide="menu" class="h-5 w-5"></i>
-    </button>
+      <button type="button" data-theme-toggle aria-label="Aydınlık / Karanlık tema" title="Aydınlık / Karanlık tema"
+        class="theme-toggle relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 hover:text-emerald-300 hover:border-emerald-400/60 transition">
+        <i data-lucide="sun" class="theme-icon-sun h-[18px] w-[18px]"></i>
+        <i data-lucide="moon" class="theme-icon-moon h-[18px] w-[18px]"></i>
+      </button>
+
+      <button id="menuBtn" class="md:hidden rounded-lg border border-slate-700 p-2 text-slate-300" aria-label="Menüyü aç/kapat">
+        <i data-lucide="menu" class="h-5 w-5"></i>
+      </button>
+    </div>
   </div>
   <div id="mobileMenu" class="hidden md:hidden border-t border-slate-800/60 bg-slate-950/95 px-4 py-4 space-y-3 text-sm">
     <a href="#ozellikler" class="block text-slate-300 hover:text-emerald-300">Özellikler</a>

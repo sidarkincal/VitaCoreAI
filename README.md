@@ -39,6 +39,7 @@ npx http-server . -p 4173
 - "Action → Reaction" smart system rules and a 9-step user journey
 - Contact form (Formspree integration) — name, e-mail, topic, and message delivered straight to the inbox
 - Smooth reveal-on-scroll animations, mobile menu
+- **Day / Night mode** — a sun/moon toggle (top-right) switches between the dark theme and a clean, pure-white light theme with a soft, eye-friendly cross-fade; the choice is remembered via `localStorage`
 
 ### Interactive Demo (`app.html`)
 | Module | Dynamic Behavior |
@@ -56,7 +57,7 @@ npx http-server . -p 4173
 ## 🛠️ Tech Stack
 
 - **React 18** (UMD, CDN) + **Babel Standalone** — state-driven simulation in `app.html`
-- **Tailwind CSS** (CDN) — dark theme; emerald/cyan/slate palette
+- **Tailwind CSS** (CDN) — dark **and** light theme (class-based, top-right toggle); emerald/cyan/slate palette
 - **lucide / lucide-react** — icon set
 - **Inter** — typography
 
